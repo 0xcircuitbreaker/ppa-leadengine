@@ -1,6 +1,9 @@
 .env
 logs/
 exports/fleet_harvest/
+exports/fresh_1m/
 exports/PPA_*
+exports/CYCLE_TEST*
+exports/day*
 __pycache__/
 .venv/
