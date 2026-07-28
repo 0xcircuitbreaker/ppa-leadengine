@@ -1,0 +1,6 @@
+.env
+logs/
+exports/fleet_harvest/
+exports/PPA_*
+__pycache__/
+.venv/

@@ -1,0 +1,8 @@
+{
+  "_comment": "HARD BLOCK: these states must NEVER appear in any packaged batch. NY = legal issue (partner directive 2026-07-24). CA = partner policy (no California). Batch builders MUST filter both the state field AND phone area codes.",
+  "blocked_state_names": ["NY", "NEW YORK", "CA", "CALIFORNIA"],
+  "blocked_area_codes": {
+    "NY": ["212","315","329","332","347","363","516","518","585","607","631","646","680","716","718","838","845","914","917","929","934"],
+    "CA": ["209","213","310","323","341","408","415","424","442","510","530","559","562","619","626","627","628","650","657","661","669","707","714","747","760","805","818","820","831","840","858","909","916","925","949","951"]
+  }
+}
