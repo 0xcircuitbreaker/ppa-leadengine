@@ -45,16 +45,19 @@ def _stats() -> dict:
     hourly, raw_hourly = {}, {}
     unsent = 0
     raw_total = 0
-    raw_24h = 0
-    new_24h = 0
-    for fn in glob.glob(str(ROOT / "exports" / "fleet_harvest" / "node_*.csv")):
+    raw_24h_set = set()
+    new_24h_set = set()
+    raw_total_set = set()
+
+    def scan_file(fn, count_unsent=True):
+        nonlocal unsent
         try:
             with open(fn, errors="replace") as f:
                 for r in csv.DictReader(f):
                     n = norm(r.get("phone", ""))
                     if not n:
                         continue
-                    raw_total += 1
+                    raw_total_set.add(n)
                     age_h = None
                     try:
                         ts = time.mktime(time.strptime((r.get("found_at") or "")[:19], "%Y-%m-%dT%H:%M:%S"))
@@ -65,14 +68,12 @@ def _stats() -> dict:
                     if h:
                         raw_hourly[h] = raw_hourly.get(h, 0) + 1
                     if age_h is not None and age_h <= 24:
-                        raw_24h += 1
-                    if (r.get("found_at") or "")[:10] == today:
-                        pass
-                    if n in sent:
+                        raw_24h_set.add(n)
+                    if not count_unsent or n in sent:
                         continue
                     unsent += 1
                     if age_h is not None and age_h <= 24:
-                        new_24h += 1
+                        new_24h_set.add(n)
                     st = (r.get("state") or "?").upper()
                     by_state[st] = by_state.get(st, 0) + 1
                     if h:
@@ -80,14 +81,14 @@ def _stats() -> dict:
                     if (r.get("found_at") or "")[:10] == today:
                         new_today[st] = new_today.get(st, 0) + 1
         except Exception:  # noqa: BLE001
-            continue
-    loom_total = 0
-    for fn in glob.glob(str(ROOT / "exports" / "fresh_1m" / "loom_*.csv")):
-        try:
-            loom_total += sum(1 for _ in open(fn)) - 1
-        except Exception:  # noqa: BLE001
             pass
-    raw_total += loom_total
+
+    for fn in glob.glob(str(ROOT / "exports" / "fleet_harvest" / "node_*.csv")):
+        if fn.endswith("node_local.csv"):
+            continue   # mirror of fresh_1m - counted directly below
+        scan_file(fn)
+    for fn in glob.glob(str(ROOT / "exports" / "fresh_1m" / "*.csv")):
+        scan_file(fn, count_unsent=False)   # raw rate incl. enrichment/scanner/loom
     zips = []
     for z in sorted(glob.glob(str(ROOT / "exports" / "*.zip")), key=lambda p: -Path(p).stat().st_mtime)[:10]:
         zp = Path(z)
@@ -117,7 +118,7 @@ def _stats() -> dict:
             pass
     return {"today": today, "new_today": new_today, "new_today_total": sum(new_today.values()),
             "unsent": unsent, "by_state": by_state, "sent_total": len(sent),
-            "raw_total": raw_total, "raw_24h": raw_24h, "new_24h": new_24h,
+            "raw_total": len(raw_total_set), "raw_24h": len(raw_24h_set), "new_24h": len(new_24h_set),
             "hourly": dict(sorted(hourly.items())[-18:]),
             "raw_hourly": dict(sorted(raw_hourly.items())[-18:]),
             "zips": zips,

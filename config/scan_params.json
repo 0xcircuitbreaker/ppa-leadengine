@@ -15,5 +15,7 @@
  "daily_new_pct": 0.3,
  "max_rows_per_file": 10000,
  "cycle_days": 60,
- "_comment_cycle": "cycle_days: sent leads older than this become 'fresh' and reusable (priority=standard). NEW always wins."
+ "_comment_cycle": "cycle_days: sent leads older than this become 'fresh' and reusable (priority=standard). NEW always wins.",
+ "daily_rate_cap": 167000,
+ "_comment_cap": "daily_rate_cap: system-wide throughput cap (unique phones per rolling 24h); governor SIGSTOPs lanes above cap, resumes at 85%"
 }
