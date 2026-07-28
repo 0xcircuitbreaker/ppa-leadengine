@@ -1,0 +1,26 @@
+{
+  "source_id": "trane_dealers",
+  "name": "Trane Comfort Specialists",
+  "base_url": "https://rightnow.trane.com/us/en/dealer-locator?q={partition}",
+  "listing_selector": "[class*='dealer'], [class*='result'], [class*='location']",
+  "fields": {
+    "business_name": "[class*='name'], h3, h4",
+    "phone": "a[href^='tel:'], [class*='phone']",
+    "city": "[class*='city'], [class*='address']"
+  },
+  "next_page_selector": "a[class*='next'], a[rel='next']",
+  "maximum_pages": 20,
+  "requests_per_minute": 8,
+  "default_state": "",
+  "default_category": "hvac",
+  "partition_by": [
+    "zipcode"
+  ],
+  "partition_values": [
+    "73101",
+    "85001",
+    "43004",
+    "73013",
+    "70112"
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "source_id": "auto.mortgage_brokers.colina_com",
+  "allowed_domains": [
+    "colina.com"
+  ],
+  "seed_url": "https://www.colina.com/agents",
+  "listing_selector": "[class*='listing'], [class*='result'], [class*='card'], div[class*='business'], article, .row, tr",
+  "fields": {
+    "business_name": "h3, h4, [class*='name'], [class*='title'], a, strong",
+    "phone": "a[href^='tel:']",
+    "city": "",
+    "state": "",
+    "category": "mortgage_brokers"
+  },
+  "next_page_selector": "",
+  "maximum_pages": 5,
+  "requests_per_minute": 60,
+  "terms_approved": true,
+  "allow_directory_collection": true,
+  "require_phone_for_lead": true,
+  "auto_discovered": true,
+  "discovered_at": "2026-07-24"
+}

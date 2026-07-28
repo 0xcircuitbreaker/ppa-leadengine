@@ -1,0 +1,35 @@
+{
+  "manifest_version": 1,
+  "source_id": "oh_industrial_compliance_ocilb",
+  "display_name": "Ohio Construction Industry Licensing Board eLicense",
+  "allowed_domains": [
+    "elicense4.com.ohio.gov"
+  ],
+  "seed_url": "https://elicense4.com.ohio.gov/Lookup/LicenseLookup.aspx",
+  "listing_selector": "#ctl00_MainContentPlaceHolder_ucLicenseLookup_gvSearchResults tbody tr:not(:first-child)",
+  "fields": {
+    "owner_name": "td:nth-of-type(2)",
+    "business_name": "td:nth-of-type(2)",
+    "source_record_id": "td:nth-of-type(3)",
+    "owner_role": "td:nth-of-type(4)",
+    "state": "td:nth-of-type(5)",
+    "detail_url": "td:nth-of-type(1) a"
+  },
+  "next_page_selector": "#ctl00_MainContentPlaceHolder_ucLicenseLookup_gvSearchResults a[href*=\"Page$\"]",
+  "maximum_pages": 500,
+  "requests_per_minute": 6,
+  "allow_detail_page_enrichment": false,
+  "require_phone_for_lead": true,
+  "terms_approved": false,
+  "allow_directory_collection": false,
+  "verification_status": "live_structure_verified_2026-07-23",
+  "execution_mode": "blocked_use_official_roster_adapter",
+  "official_roster_url": "https://elicense4.com.ohio.gov/Lookup/GenerateRoster.aspx",
+  "activation_blockers": [
+    "Automated collection terms and source-activation evidence are not approved.",
+    "Search submission and pagination use ASP.NET postbacks, which the generic GET-only adapter cannot exhaust.",
+    "Lookup rows identify individual licensees and do not expose business phone numbers.",
+    "OCILB publishes a no-fee roster generator; this source should use a dedicated official bulk-file adapter."
+  ],
+  "supersedes_url": "https://com.ohio.gov/divisions-and-programs/industrial-compliance"
+}

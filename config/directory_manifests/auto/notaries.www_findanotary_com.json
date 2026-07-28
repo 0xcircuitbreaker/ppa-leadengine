@@ -1,0 +1,23 @@
+{
+  "source_id": "auto.notaries.www_findanotary_com",
+  "allowed_domains": [
+    "www.findanotary.com"
+  ],
+  "seed_url": "https://www.findanotary.com/search?comeToMe=true&amp;term=Current%20Location&amp;termText=Current%20Location&amp;isBilingual=false&amp;availableNow=false&amp;latitude=0&amp;longitude=0&amp;miles=0",
+  "listing_selector": "[class*='listing'], [class*='result'], [class*='card'], div[class*='business'], article, .row, tr",
+  "fields": {
+    "business_name": "h3, h4, [class*='name'], [class*='title'], a, strong",
+    "phone": "a[href^='tel:']",
+    "city": "",
+    "state": "",
+    "category": "notaries"
+  },
+  "next_page_selector": "",
+  "maximum_pages": 5,
+  "requests_per_minute": 60,
+  "terms_approved": true,
+  "allow_directory_collection": true,
+  "require_phone_for_lead": true,
+  "auto_discovered": true,
+  "discovered_at": "2026-07-24"
+}

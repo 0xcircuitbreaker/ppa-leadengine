@@ -1,0 +1,32 @@
+{
+  "manifest_version": 1,
+  "source_id": "wv_contractor_licensing_board_verify",
+  "display_name": "West Virginia Contractor Licensing Board Verification",
+  "allowed_domains": [
+    "wvclboard.wv.gov"
+  ],
+  "seed_url": "https://wvclboard.wv.gov/verify/",
+  "listing_selector": "#tblResults tbody tr.resultRow",
+  "fields": {
+    "source_record_id": "td:nth-of-type(1)",
+    "business_name": "td:nth-of-type(2)",
+    "address": "td:nth-of-type(4)",
+    "phone": "td:nth-of-type(6)",
+    "category": "td:nth-of-type(7)"
+  },
+  "next_page_selector": "a.page-link.next:not(.disabled)",
+  "maximum_pages": 500,
+  "requests_per_minute": 6,
+  "allow_detail_page_enrichment": false,
+  "require_phone_for_lead": true,
+  "terms_approved": false,
+  "allow_directory_collection": false,
+  "verification_status": "live_structure_verified_2026-07-23",
+  "execution_mode": "blocked_interactive_ajax_form",
+  "activation_blockers": [
+    "Automated collection terms and source-activation evidence are not approved.",
+    "The search requires a submitted company prefix or county selection.",
+    "Pagination uses JavaScript fragment links and cannot be exhausted by the generic GET-only adapter.",
+    "A source-specific form adapter or authorized official export is required before activation."
+  ]
+}

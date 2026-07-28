@@ -14,6 +14,14 @@ Scans new areas, compiles state-segregated CSV batches, delivers via Telegram.
 - Manual compile: `python3 scripts/ops/ppa_compile.py 167000 PPA_MANUAL`
 - Manual report: `python3 scripts/ops/ppa_report.py`
 
+## Loom directory lane (24/7)
+adapters/permitted_directory.py + config/directory_manifests/ (7 curated +
+auto-discovered) + loom_constant.py (24/7 loop, KeepAlive) +
+directory_discovery.py (finds new directories daily 04:50, auto-manifests).
+Output -> exports/fresh_1m -> harvest -> compile (same chain as the scanner).
+Proxies off by default: LOOM_PROXY_URL=... to activate. directory_crawler.py
+available for curated-manifest tuning.
+
 ## 60-day fresh cycle
 Sent leads become 'fresh' (reusable) 60 days after shipment (ledger-tracked;
 legacy pool uses found_at). Daily batch = daily_new_pct NEW + fresh fill

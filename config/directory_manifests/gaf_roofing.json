@@ -1,0 +1,27 @@
+{
+  "source_id": "gaf_contractors",
+  "name": "GAF Certified Roofing Contractors",
+  "base_url": "https://www.gaf.com/roofing-contractors/search?zipcode={partition}&radius=100",
+  "listing_selector": "[class*='contractor'], [class*='result'], [class*='listing'], .dealer-result",
+  "fields": {
+    "business_name": "[class*='name'], h3, h4, .company-name",
+    "phone": "a[href^='tel:'], .phone, [class*='phone']",
+    "city": "[class*='city'], .city",
+    "category": "[class*='category']"
+  },
+  "next_page_selector": "a[class*='next'], a[rel='next']",
+  "maximum_pages": 50,
+  "requests_per_minute": 8,
+  "default_state": "",
+  "default_category": "roofing",
+  "partition_by": [
+    "zipcode"
+  ],
+  "partition_values": [
+    "73101",
+    "85001",
+    "43004",
+    "73013",
+    "70112"
+  ]
+}

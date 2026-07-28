@@ -1,0 +1,36 @@
+{
+  "manifest_version": 1,
+  "source_id": "oh_cosmetology_board_elicense",
+  "display_name": "Ohio Cosmetology and Barber Board eLicense",
+  "allowed_domains": [
+    "elicense.ohio.gov"
+  ],
+  "seed_url": "https://elicense.ohio.gov/OH_VerifyLicense",
+  "listing_selector": "#results tbody tr:not(.dataTables_empty)",
+  "fields": {
+    "business_name": "td:nth-of-type(1)",
+    "category": "td:nth-of-type(4)",
+    "source_record_id": "td:nth-of-type(3)",
+    "address": "td:nth-of-type(9)",
+    "city": "td:nth-of-type(10)",
+    "state": "td:nth-of-type(11)",
+    "zip": "td:nth-of-type(13)",
+    "detail_url": "td:nth-of-type(14) a"
+  },
+  "next_page_selector": "#results_next:not(.disabled) a",
+  "maximum_pages": 500,
+  "requests_per_minute": 6,
+  "allow_detail_page_enrichment": false,
+  "require_phone_for_lead": true,
+  "terms_approved": false,
+  "allow_directory_collection": false,
+  "verification_status": "live_structure_verified_2026-07-23",
+  "execution_mode": "blocked_interactive_salesforce_form",
+  "activation_blockers": [
+    "Automated collection terms and source-activation evidence are not approved.",
+    "The current eLicense search requires an interactive JavaScript form before results exist.",
+    "The verified result grid and sampled detail records do not expose a phone field.",
+    "A phone-bearing official bulk source or separately approved enrichment lane is required."
+  ],
+  "supersedes_url": "https://cos.ohio.gov/hi/Licensing/Cosmetology/Search"
+}

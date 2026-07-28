@@ -1,0 +1,27 @@
+{
+  "source_id": "npidp_providers",
+  "name": "NPIDP Healthcare Providers",
+  "base_url": "https://npidb.org/doctors/{partition}/",
+  "listing_selector": ".doctor-card, .provider-card, .listing",
+  "fields": {
+    "business_name": ".doctor-name, h3, h4, .name",
+    "phone": "a[href^='tel:'], .phone",
+    "city": ".city, .address",
+    "category": ".specialty, .category"
+  },
+  "next_page_selector": "a[class*='next'], a[rel='next']",
+  "maximum_pages": 50,
+  "requests_per_minute": 10,
+  "default_state": "",
+  "default_category": "",
+  "partition_by": [
+    "state"
+  ],
+  "partition_values": [
+    "texas",
+    "arizona",
+    "ohio",
+    "oklahoma",
+    "louisiana"
+  ]
+}
