@@ -40,11 +40,13 @@ def _sent() -> set:
 def _stats() -> dict:
     sent = _sent()
     today = time.strftime("%Y-%m-%d")
+    now = time.time()
     new_today, by_state = {}, {}
     hourly, raw_hourly = {}, {}
     unsent = 0
     raw_total = 0
-    raw_today = 0
+    raw_24h = 0
+    new_24h = 0
     for fn in glob.glob(str(ROOT / "exports" / "fleet_harvest" / "node_*.csv")):
         try:
             with open(fn, errors="replace") as f:
@@ -53,14 +55,24 @@ def _stats() -> dict:
                     if not n:
                         continue
                     raw_total += 1
+                    age_h = None
+                    try:
+                        ts = time.mktime(time.strptime((r.get("found_at") or "")[:19], "%Y-%m-%dT%H:%M:%S"))
+                        age_h = (now - ts) / 3600
+                    except Exception:  # noqa: BLE001
+                        pass
                     h = (r.get("found_at") or "")[:13]
                     if h:
                         raw_hourly[h] = raw_hourly.get(h, 0) + 1
+                    if age_h is not None and age_h <= 24:
+                        raw_24h += 1
                     if (r.get("found_at") or "")[:10] == today:
-                        raw_today += 1
+                        pass
                     if n in sent:
                         continue
                     unsent += 1
+                    if age_h is not None and age_h <= 24:
+                        new_24h += 1
                     st = (r.get("state") or "?").upper()
                     by_state[st] = by_state.get(st, 0) + 1
                     if h:
@@ -75,6 +87,7 @@ def _stats() -> dict:
             loom_total += sum(1 for _ in open(fn)) - 1
         except Exception:  # noqa: BLE001
             pass
+    raw_total += loom_total
     zips = []
     for z in sorted(glob.glob(str(ROOT / "exports" / "*.zip")), key=lambda p: -Path(p).stat().st_mtime)[:10]:
         zp = Path(z)
@@ -104,7 +117,7 @@ def _stats() -> dict:
             pass
     return {"today": today, "new_today": new_today, "new_today_total": sum(new_today.values()),
             "unsent": unsent, "by_state": by_state, "sent_total": len(sent),
-            "raw_total": raw_total, "raw_today": raw_today, "loom_total": loom_total,
+            "raw_total": raw_total, "raw_24h": raw_24h, "new_24h": new_24h,
             "hourly": dict(sorted(hourly.items())[-18:]),
             "raw_hourly": dict(sorted(raw_hourly.items())[-18:]),
             "zips": zips,
@@ -114,36 +127,66 @@ def _stats() -> dict:
 
 
 def _page(s: dict) -> str:
-    state_rows = "".join(f"<tr><td>{k}</td><td>{v:,}</td><td>{s['new_today'].get(k, 0):,}</td></tr>"
+    state_rows = "".join(f"<tr><td>{k}</td><td class=num>{v:,}</td><td class=num>{s['new_today'].get(k, 0):,}</td></tr>"
                          for k, v in sorted(s["by_state"].items(), key=lambda x: -x[1]))
-    hour_rows = "".join(f"<tr><td>{h[5:]}h</td><td>{s['raw_hourly'].get(h, 0):,}</td><td>{c:,}</td></tr>"
+    hour_rows = "".join(f"<tr><td class=mono>{h[5:]}h</td><td class=num>{s['raw_hourly'].get(h, 0):,}</td><td class=num>{c:,}</td></tr>"
                         for h, c in s["hourly"].items())
-    zip_rows = "".join(f"<tr><td><a href='/z/{z['name']}'>{z['name']}</a></td><td>{z['mb']}MB</td><td>{z['mtime']}</td></tr>"
+    zip_rows = "".join(f"<tr><td><a href='/z/{z['name']}'>{z['name']}</a></td><td class=num>{z['mb']}MB</td><td class=muted>{z['mtime']}</td></tr>"
                        for z in s["zips"])
-    job_rows = "".join(f"<tr><td>{j}</td><td class='{st}'>{st}</td></tr>" for j, st in s["jobs"].items())
-    return f"""<!doctype html><meta charset=utf-8><meta http-equiv=refresh content=60>
+    job_rows = "".join(f"<tr><td>{j}</td><td><span class='pill {st}'>{st}</span></td></tr>" for j, st in s["jobs"].items())
+    rate_pct = min(100, round(100 * s["raw_24h"] / 167000)) if s["raw_24h"] else 0
+    return f"""<!doctype html><html><head><meta charset=utf-8><meta http-equiv=refresh content=60>
+<meta name=viewport content="width=device-width,initial-scale=1">
 <title>PPA Lead Engine</title>
-<style>body{{font-family:-apple-system,monospace;margin:2rem;background:#0d1117;color:#c9d1d9}}
-h1{{color:#58a6ff}}table{{border-collapse:collapse;margin:1rem 0}}td,th{{border:1px solid #30363d;padding:4px 12px}}
-.running{{color:#3fb950}}.STOPPED{{color:#f85149}}a{{color:#58a6ff}}.grid{{display:flex;gap:3rem;flex-wrap:wrap}}</style>
-<h1>PPA Lead Engine — {s['today']}</h1>
+<style>
+:root{{--canvas:#f4f6f8;--panel:#fff;--panel-2:#f8fafb;--ink:#18212f;--heading:#101828;--copy:#344054;
+--muted:#667085;--subtle:#98a2b3;--line:#e4e7ec;--line-2:#d0d5dd;--rail:#17202c;--rail2:#202b39;
+--accent:#0a6e73;--accent-soft:#e7f5f3;--good:#147a4a;--bad:#c0362c;--blue:#175cd3}}
+*{{box-sizing:border-box;margin:0}}body{{font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans-serif;
+background:var(--canvas);color:var(--copy);font-size:14px}}
+.topbar{{background:var(--rail);color:#d9e2ef;display:flex;align-items:center;gap:14px;padding:14px 28px}}
+.mark{{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--blue))}}
+.brand{{font-weight:650;color:#fff;letter-spacing:.4px}}.sub{{color:#98a2b3;font-size:12px}}
+.pill{{margin-left:auto;background:var(--rail2);border:1px solid #2b3c4d;color:#9fd1c9;border-radius:999px;
+padding:4px 12px;font-size:11px;font-family:ui-monospace,monospace;text-transform:uppercase;letter-spacing:.6px}}
+.wrap{{max-width:1240px;margin:26px auto;padding:0 22px}}
+.kpis{{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:22px}}
+.kpi{{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}}
+.kpi.hero{{background:linear-gradient(160deg,#101828,#17202c);border-color:#17202c}}
+.kpi .label{{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:6px}}
+.kpi.hero .label{{color:#98a2b3}}.kpi .val{{font-size:26px;font-weight:700;color:var(--heading)}}
+.kpi.hero .val{{color:#fff;font-size:32px}}.kpi .foot{{font-size:11px;color:var(--subtle);margin-top:4px}}
+.bar{{height:5px;background:#2b3c4d;border-radius:3px;margin-top:10px}}
+.bar i{{display:block;height:5px;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--blue))}}
+.grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:14px}}
+.card{{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}}
+.card h3{{font-size:12px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);
+padding:13px 16px;border-bottom:1px solid var(--line);background:var(--panel-2)}}
+table{{width:100%;border-collapse:collapse}}td,th{{padding:7px 16px;border-bottom:1px solid var(--line);text-align:left}}
+tr:last-child td{{border-bottom:none}}.num{{text-align:right;font-variant-numeric:tabular-nums}}
+.mono{{font-family:ui-monospace,monospace;font-size:12px}}.muted{{color:var(--subtle)}}
+a{{color:var(--blue);text-decoration:none}}.pill.running{{color:var(--good);border-color:#bfe3cd;background:#eefaf2}}
+.pill.STOPPED{{color:var(--bad);border-color:#f3c6c2;background:#fdf1f0}}
+.pill{{margin-left:0;border:1px solid var(--line-2);background:var(--panel-2);padding:2px 9px}}
+</style></head><body>
+<div class=topbar><div class=mark></div><div><div class=brand>PPA LEAD ENGINE</div>
+<div class=sub>local dashboard · {s['today']}</div></div><div class=pill>LAN · live</div></div>
+<div class=wrap>
+<div class=kpis>
+<div class="kpi hero"><div class=label>24 hr rate</div><div class=val>{s['raw_24h']:,}</div>
+<div class=bar><i style="width:{rate_pct}%"></i></div><div class=foot>leads, rolling 24h</div></div>
+<div class=kpi><div class=label>New (24h)</div><div class=val>{s['new_24h']:,}</div><div class=foot>never delivered</div></div>
+<div class=kpi><div class=label>Unsent pool</div><div class=val>{s['unsent']:,}</div><div class=foot>ready to compile</div></div>
+<div class=kpi><div class=label>Fresh cycle ({s['cycle_days']}d)</div><div class=val>{s['fresh_eligible']:,}</div><div class=foot>reusable</div></div>
+<div class=kpi><div class=label>Sent all time</div><div class=val>{s['sent_total']:,}</div><div class=foot>delivered</div></div>
+<div class=kpi><div class=label>Disk free</div><div class=val>{s['disk_free']}</div><div class=foot>{'DELIVERY PAUSED' if s['paused'] else 'delivery active'}</div></div>
+</div>
 <div class=grid>
-<div><h2>Today</h2><table>
-<tr><th>RAW scanned today</th><td><b>{s['raw_today']:,}</b></td></tr>
-<tr><th>RAW all time</th><td>{s['raw_total']:,} (+ {s['loom_total']:,} loom)</td></tr>
-<tr><th>NEW today (unsent)</th><td>{s['new_today_total']:,}</td></tr>
-<tr><th>unsent pool</th><td>{s['unsent']:,}</td></tr>
-<tr><th>fresh-cycle eligible ({s['cycle_days']}d)</th><td>{s['fresh_eligible']:,}</td></tr>
-<tr><th>sent (all time)</th><td>{s['sent_total']:,}</td></tr>
-<tr><th>disk free</th><td>{s['disk_free']}</td></tr>
-<tr><th>delivery</th><td>{'PAUSED' if s['paused'] else 'active'}</td></tr>
-<tr><th>scan states</th><td>{', '.join(s['params']['states'])}</td></tr>
-</table></div>
-<div><h2>Jobs</h2><table>{job_rows}</table></div>
-<div><h2>Per hour (UTC)</h2><table><tr><th>hour</th><th>RAW</th><th>NEW</th></tr>{hour_rows}</table></div>
-<div><h2>Unsent by state</h2><table><tr><th>state</th><th>unsent</th><th>new today</th></tr>{state_rows}</table></div>
-<div><h2>Batches</h2><table><tr><th>zip</th><th>size</th><th>built</th></tr>{zip_rows}</table></div>
-</div>"""
+<div class=card><h3>Per hour (UTC) — RAW vs NEW</h3><table><tr><th>hour</th><th class=num>RAW</th><th class=num>NEW</th></tr>{hour_rows}</table></div>
+<div class=card><h3>Unsent by state</h3><table><tr><th>state</th><th class=num>unsent</th><th class=num>new today</th></tr>{state_rows}</table></div>
+<div class=card><h3>Jobs</h3><table>{job_rows}</table></div>
+<div class=card><h3>Batches</h3><table><tr><th>zip</th><th class=num>size</th><th>built</th></tr>{zip_rows}</table></div>
+</div></div></body></html>"""
 
 
 class H(BaseHTTPRequestHandler):
