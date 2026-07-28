@@ -7,3 +7,4 @@ exports/CYCLE_TEST*
 exports/day*
 __pycache__/
 .venv/
+exports/local_scan.log
