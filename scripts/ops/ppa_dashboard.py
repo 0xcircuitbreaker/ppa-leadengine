@@ -41,25 +41,40 @@ def _stats() -> dict:
     sent = _sent()
     today = time.strftime("%Y-%m-%d")
     new_today, by_state = {}, {}
-    hourly = {}
+    hourly, raw_hourly = {}, {}
     unsent = 0
+    raw_total = 0
+    raw_today = 0
     for fn in glob.glob(str(ROOT / "exports" / "fleet_harvest" / "node_*.csv")):
         try:
             with open(fn, errors="replace") as f:
                 for r in csv.DictReader(f):
                     n = norm(r.get("phone", ""))
-                    if not n or n in sent:
+                    if not n:
+                        continue
+                    raw_total += 1
+                    h = (r.get("found_at") or "")[:13]
+                    if h:
+                        raw_hourly[h] = raw_hourly.get(h, 0) + 1
+                    if (r.get("found_at") or "")[:10] == today:
+                        raw_today += 1
+                    if n in sent:
                         continue
                     unsent += 1
                     st = (r.get("state") or "?").upper()
                     by_state[st] = by_state.get(st, 0) + 1
-                    h = (r.get("found_at") or "")[:13]
                     if h:
                         hourly[h] = hourly.get(h, 0) + 1
                     if (r.get("found_at") or "")[:10] == today:
                         new_today[st] = new_today.get(st, 0) + 1
         except Exception:  # noqa: BLE001
             continue
+    loom_total = 0
+    for fn in glob.glob(str(ROOT / "exports" / "fresh_1m" / "loom_*.csv")):
+        try:
+            loom_total += sum(1 for _ in open(fn)) - 1
+        except Exception:  # noqa: BLE001
+            pass
     zips = []
     for z in sorted(glob.glob(str(ROOT / "exports" / "*.zip")), key=lambda p: -Path(p).stat().st_mtime)[:10]:
         zp = Path(z)
@@ -89,7 +104,10 @@ def _stats() -> dict:
             pass
     return {"today": today, "new_today": new_today, "new_today_total": sum(new_today.values()),
             "unsent": unsent, "by_state": by_state, "sent_total": len(sent),
-            "hourly": dict(sorted(hourly.items())[-18:]), "zips": zips,
+            "raw_total": raw_total, "raw_today": raw_today, "loom_total": loom_total,
+            "hourly": dict(sorted(hourly.items())[-18:]),
+            "raw_hourly": dict(sorted(raw_hourly.items())[-18:]),
+            "zips": zips,
             "disk_free": df[3], "jobs": jobs, "params": params,
             "cycle_days": cycle_days, "fresh_eligible": fresh_n,
             "paused": (ROOT / "config" / "delivery_paused.flag").exists()}
@@ -98,7 +116,8 @@ def _stats() -> dict:
 def _page(s: dict) -> str:
     state_rows = "".join(f"<tr><td>{k}</td><td>{v:,}</td><td>{s['new_today'].get(k, 0):,}</td></tr>"
                          for k, v in sorted(s["by_state"].items(), key=lambda x: -x[1]))
-    hour_rows = "".join(f"<tr><td>{h[5:]}h</td><td>{c:,}</td></tr>" for h, c in s["hourly"].items())
+    hour_rows = "".join(f"<tr><td>{h[5:]}h</td><td>{s['raw_hourly'].get(h, 0):,}</td><td>{c:,}</td></tr>"
+                        for h, c in s["hourly"].items())
     zip_rows = "".join(f"<tr><td><a href='/z/{z['name']}'>{z['name']}</a></td><td>{z['mb']}MB</td><td>{z['mtime']}</td></tr>"
                        for z in s["zips"])
     job_rows = "".join(f"<tr><td>{j}</td><td class='{st}'>{st}</td></tr>" for j, st in s["jobs"].items())
@@ -110,17 +129,18 @@ h1{{color:#58a6ff}}table{{border-collapse:collapse;margin:1rem 0}}td,th{{border:
 <h1>PPA Lead Engine — {s['today']}</h1>
 <div class=grid>
 <div><h2>Today</h2><table>
-<tr><th>NEW today</th><td><b>{s['new_today_total']:,}</b></td></tr>
+<tr><th>RAW scanned today</th><td><b>{s['raw_today']:,}</b></td></tr>
+<tr><th>RAW all time</th><td>{s['raw_total']:,} (+ {s['loom_total']:,} loom)</td></tr>
+<tr><th>NEW today (unsent)</th><td>{s['new_today_total']:,}</td></tr>
 <tr><th>unsent pool</th><td>{s['unsent']:,}</td></tr>
 <tr><th>fresh-cycle eligible ({s['cycle_days']}d)</th><td>{s['fresh_eligible']:,}</td></tr>
 <tr><th>sent (all time)</th><td>{s['sent_total']:,}</td></tr>
 <tr><th>disk free</th><td>{s['disk_free']}</td></tr>
 <tr><th>delivery</th><td>{'PAUSED' if s['paused'] else 'active'}</td></tr>
 <tr><th>scan states</th><td>{', '.join(s['params']['states'])}</td></tr>
-<tr><th>daily target</th><td>{s['params']['daily_volume_target']:,}</td></tr>
 </table></div>
 <div><h2>Jobs</h2><table>{job_rows}</table></div>
-<div><h2>NEW by hour (UTC)</h2><table>{hour_rows}</table></div>
+<div><h2>Per hour (UTC)</h2><table><tr><th>hour</th><th>RAW</th><th>NEW</th></tr>{hour_rows}</table></div>
 <div><h2>Unsent by state</h2><table><tr><th>state</th><th>unsent</th><th>new today</th></tr>{state_rows}</table></div>
 <div><h2>Batches</h2><table><tr><th>zip</th><th>size</th><th>built</th></tr>{zip_rows}</table></div>
 </div>"""
