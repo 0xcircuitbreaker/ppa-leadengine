@@ -8,3 +8,5 @@ exports/day*
 __pycache__/
 .venv/
 exports/local_scan.log
+exports/seeds/seed_pool.csv
+exports/seeds/.enrich_state.json
