@@ -46,11 +46,28 @@ def main() -> None:
             continue
     df = subprocess.run(["df", "-h", "/"], capture_output=True, text=True).stdout.splitlines()[-1].split()
     sent_total = len(sent)
+    # fresh-cycle eligible (60d): ledger phones older than cycle
+    params = json.load(open(ROOT / "config" / "scan_params.json"))
+    cycle_days = int(params.get("cycle_days", 60))
+    cutoff = time.time() - cycle_days * 86400
+    fresh_n = 0
+    ledger_file = ROOT / "exports" / "dedup_reference" / "delivery_ledger.json"
+    if ledger_file.exists():
+        try:
+            for ts in json.load(open(ledger_file)).get("phone_dates", {}).values():
+                try:
+                    if time.mktime(time.strptime(ts[:19], "%Y-%m-%dT%H:%M:%S")) <= cutoff:
+                        fresh_n += 1
+                except Exception:  # noqa: BLE001
+                    pass
+        except Exception:  # noqa: BLE001
+            pass
     lines = [
         f"PPA LEAD ENGINE — daily report {today}",
         f"NEW today: {sum(new_today.values()):,}",
         f"  by state: {dict(new_today.most_common(10))}",
         f"unsent pool: {unsent:,}",
+        f"fresh-cycle eligible ({cycle_days}d): {fresh_n:,}",
         f"total sent (all time): {sent_total:,}",
         f"disk free: {df[3]}",
     ]

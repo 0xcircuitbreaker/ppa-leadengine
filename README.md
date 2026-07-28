@@ -14,6 +14,12 @@ Scans new areas, compiles state-segregated CSV batches, delivers via Telegram.
 - Manual compile: `python3 scripts/ops/ppa_compile.py 167000 PPA_MANUAL`
 - Manual report: `python3 scripts/ops/ppa_report.py`
 
+## 60-day fresh cycle
+Sent leads become 'fresh' (reusable) 60 days after shipment (ledger-tracked;
+legacy pool uses found_at). Daily batch = daily_new_pct NEW + fresh fill
+(priority=standard). NEW always wins. Config: config/scan_params.json
+cycle_days (default 60). Nothing is 60d old yet — cycle engages ~Sep 25.
+
 ## Output format
 `priority,business_name,phone,phone_type,category,city,state` — one state per
 file, state in filename, 10k rows max per file, zipped.

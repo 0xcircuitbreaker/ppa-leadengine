@@ -13,5 +13,7 @@
  "workers": 120,
  "daily_volume_target": 167000,
  "daily_new_pct": 0.3,
- "max_rows_per_file": 10000
+ "max_rows_per_file": 10000,
+ "cycle_days": 60,
+ "_comment_cycle": "cycle_days: sent leads older than this become 'fresh' and reusable (priority=standard). NEW always wins."
 }

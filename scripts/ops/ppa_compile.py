@@ -75,7 +75,7 @@ def load_acs() -> dict:
 
 def main() -> None:
     params = json.load(open(ROOT / "config" / "scan_params.json"))
-    volume = int(sys.argv[1]) if len(sys.argv) > 1 else int(params["daily_volume_target"])
+    volume = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else int(params["daily_volume_target"])
     name = sys.argv[2] if len(sys.argv) > 2 else "PPA_DAILY"
     valid_states = set(params["states"])
     acs = load_acs()
@@ -97,16 +97,88 @@ def main() -> None:
                           "phone": fmt(n), "category": (r.get("category") or "business")[:40],
                           "city": (r.get("city") or "").title(), "state": st}
 
-    rows = list(new.values())
+    # ---- 60-day fresh cycle: phones shipped >cycle_days ago become reusable.
+    # NEW always wins; fresh fills the rest (priority 'standard').
+    cycle_days = int(params.get("cycle_days", 60))
+    import time as _t
+    cutoff = _t.time() - cycle_days * 86400
+    ledger_file = ROOT / "exports" / "dedup_reference" / "delivery_ledger.json"
+    phone_dates = {}
+    if ledger_file.exists():
+        try:
+            phone_dates = json.load(open(ledger_file)).get("phone_dates", {})
+        except Exception:  # noqa: BLE001
+            phone_dates = {}
+    eligible = set()
+    for p, ts in phone_dates.items():
+        n = norm(p)
+        if not n or n in new:
+            continue
+        try:
+            shipped_ts = _t.mktime(_t.strptime(ts[:19], "%Y-%m-%dT%H:%M:%S"))
+        except Exception:  # noqa: BLE001
+            continue
+        if shipped_ts <= cutoff:
+            eligible.add(n)
+
+    fresh: dict[str, dict] = {}
+    if eligible or True:
+        # Legacy pool without ledger dates: found_at is the cycle timestamp
+        # (phone was shipped after it was found -> slightly conservative).
+        for fn in sorted(glob.glob(str(ROOT / "exports" / "standard_pool" / "*.csv"))):
+            with open(fn, errors="replace") as f:
+                for r in csv.DictReader(f):
+                    n = norm(r.get("phone", ""))
+                    st = (r.get("state") or "").strip().upper()
+                    if not n or n in fresh or n in new or st not in valid_states:
+                        continue
+                    if n in eligible:
+                        pass
+                    else:
+                        if n not in sent:
+                            continue
+                        try:
+                            fts = _t.mktime(_t.strptime((r.get("found_at") or "")[:19], "%Y-%m-%dT%H:%M:%S"))
+                        except Exception:  # noqa: BLE001
+                            continue
+                        if fts > cutoff:
+                            continue
+                    if is_blocked(st, n) or is_junk(r.get("website", "")):
+                        continue
+                    if st in acs and acs[st] and n[:3] not in acs[st]:
+                        continue
+                    fresh[n] = {"business_name": (r.get("business_name") or "")[:80],
+                                "phone": fmt(n), "category": (r.get("category") or "business")[:40],
+                                "city": (r.get("city") or "").title(), "state": st}
+
+    new_pct = float(params.get("daily_new_pct", 0.30))
+    new_budget = min(len(new), round(volume * new_pct))
+    new_rows = list(new.values())
     by_state: dict[str, list] = {}
-    for r in rows:
+    for r in new_rows:
         by_state.setdefault(r["state"], []).append(r)
-    total = len(rows)
-    picked = []
+    picked_new = []
+    total_new = len(new_rows)
     for st in sorted(by_state, key=lambda s: -len(by_state[s])):
-        quota = round(volume * len(by_state[st]) / max(total, 1))
-        picked.extend(by_state[st][:quota])
-    picked = picked[:volume]
+        quota = round(new_budget * len(by_state[st]) / max(total_new, 1))
+        picked_new.extend(by_state[st][:quota])
+    picked_new = picked_new[:new_budget]
+
+    need = volume - len(picked_new)
+    fresh_rows = list(fresh.values())
+    by_state = {}
+    for r in fresh_rows:
+        by_state.setdefault(r["state"], []).append(r)
+    picked_fresh = []
+    total_fresh = len(fresh_rows)
+    for st in sorted(by_state, key=lambda s: -len(by_state[s])):
+        quota = round(need * len(by_state[st]) / max(total_fresh, 1))
+        picked_fresh.extend(by_state[st][:quota])
+    picked_fresh = picked_fresh[:need]
+
+    picked = ([{"priority": "high", **r} for r in picked_new] +
+              [{"priority": "standard", **r} for r in picked_fresh])
+    print(f"NEW {len(picked_new):,} + FRESH({cycle_days}d cycle) {len(picked_fresh):,} = {len(picked):,}")
 
     out = ROOT / "exports" / name
     out.mkdir(exist_ok=True)
@@ -130,7 +202,7 @@ def main() -> None:
                     w = csv.DictWriter(f, fieldnames=FIELDS, extrasaction="ignore")
                     w.writeheader()
                     for r in chunk:
-                        w.writerow({"priority": "high", **r, "phone_type": "mobile"})
+                        w.writerow({**r, "phone_type": "mobile"})
                 z.write(fn, fn.name)
                 b += 1
 
