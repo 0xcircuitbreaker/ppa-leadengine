@@ -53,3 +53,23 @@ else
   echo "dell: 0 or unreachable"
 fi
 echo "HARVEST_DONE: $(ls "$OUT" | wc -l) node files"
+# Local machine's own scanner output -> node_local.csv (the fresh_1m gap fix)
+python3 - <<'PYEOF'
+import csv, glob, re
+OUT = "/Users/a2.0/ppa-leadengine/exports/fleet_harvest"
+FIELDS = ["business_name","phone","phone_type","category","city","state","source","discovery_method","website","is_sole_proprietor","found_at"]
+seen, rows = set(), []
+for fn in sorted(glob.glob("/Users/a2.0/ppa-leadengine/exports/fresh_1m/*.csv")):
+    try:
+        with open(fn, errors="replace") as f:
+            for r in csv.DictReader(f):
+                p = re.sub(r"\D", "", r.get("phone", ""))
+                if len(p) >= 10 and p not in seen:
+                    seen.add(p); rows.append(r)
+    except Exception:
+        pass
+with open(f"{OUT}/node_local.csv", "w", newline="") as f:
+    w = csv.DictWriter(f, fieldnames=FIELDS, extrasaction="ignore")
+    w.writeheader(); w.writerows(rows)
+print(f"local: {len(rows)} leads consolidated")
+PYEOF

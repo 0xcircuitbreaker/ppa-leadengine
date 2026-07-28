@@ -1,0 +1,67 @@
+SELF-PROXY SCANNER — Uses our own VPS IPs as proxy network
+States: ['LA'] | Workers: 150 | chunked list (bounded RAM)
+Self-proxy pool: 7 unique VPS IPs
+SHARD: 0/1 (env) — only scanning 1/1 of the space, zero overlap with other nodes
+============================================================
+        5/1,000,000 | 46/min | ETA:363h | 300 searches
+        6/1,000,000 | 20/min | ETA:828h | 600 searches
+        7/1,000,000 | 14/min | ETA:1164h | 900 searches
+        9/1,000,000 | 14/min | ETA:1189h | 1,200 searches
+        9/1,000,000 | 12/min | ETA:1421h | 1,500 searches
+        9/1,000,000 | 10/min | ETA:1724h | 1,800 searches
+       10/1,000,000 | 9/min | ETA:1857h | 2,100 searches
+       12/1,000,000 | 10/min | ETA:1734h | 2,400 searches
+       12/1,000,000 | 8/min | ETA:1961h | 2,700 searches
+       12/1,000,000 | 8/min | ETA:2196h | 3,000 searches
+       12/1,000,000 | 7/min | ETA:2445h | 3,300 searches
+       14/1,000,000 | 8/min | ETA:2218h | 3,600 searches
+       14/1,000,000 | 7/min | ETA:2402h | 3,900 searches
+       17/1,000,000 | 8/min | ETA:2133h | 4,200 searches
+       17/1,000,000 | 7/min | ETA:2334h | 4,500 searches
+       17/1,000,000 | 7/min | ETA:2511h | 4,800 searches
+       17/1,000,000 | 6/min | ETA:2644h | 5,100 searches
+       18/1,000,000 | 6/min | ETA:2662h | 5,400 searches
+       18/1,000,000 | 6/min | ETA:2812h | 5,700 searches
+       19/1,000,000 | 6/min | ETA:2818h | 6,000 searches
+       19/1,000,000 | 6/min | ETA:2978h | 6,300 searches
+       19/1,000,000 | 5/min | ETA:3145h | 6,600 searches
+       19/1,000,000 | 5/min | ETA:3306h | 6,900 searches
+       19/1,000,000 | 5/min | ETA:3487h | 7,200 searches
+       19/1,000,000 | 5/min | ETA:3587h | 7,500 searches
+       19/1,000,000 | 4/min | ETA:3707h | 7,800 searches
+       19/1,000,000 | 4/min | ETA:3838h | 8,100 searches
+       19/1,000,000 | 4/min | ETA:3990h | 8,400 searches
+       19/1,000,000 | 4/min | ETA:4146h | 8,700 searches
+       19/1,000,000 | 4/min | ETA:4315h | 9,000 searches
+       19/1,000,000 | 4/min | ETA:4472h | 9,300 searches
+       21/1,000,000 | 4/min | ETA:4165h | 9,600 searches
+       22/1,000,000 | 4/min | ETA:4097h | 9,900 searches
+       22/1,000,000 | 4/min | ETA:4215h | 10,200 searches
+       22/1,000,000 | 4/min | ETA:4343h | 10,500 searches
+       22/1,000,000 | 4/min | ETA:4429h | 10,800 searches
+       22/1,000,000 | 4/min | ETA:4506h | 11,100 searches
+       22/1,000,000 | 4/min | ETA:4630h | 11,400 searches
+       22/1,000,000 | 4/min | ETA:4739h | 11,700 searches
+       22/1,000,000 | 3/min | ETA:4830h | 12,000 searches
+       22/1,000,000 | 3/min | ETA:4957h | 12,300 searches
+       22/1,000,000 | 3/min | ETA:5084h | 12,600 searches
+       25/1,000,000 | 4/min | ETA:4550h | 12,900 searches
+       27/1,000,000 | 4/min | ETA:4292h | 13,200 searches
+       27/1,000,000 | 4/min | ETA:4367h | 13,500 searches
+       27/1,000,000 | 4/min | ETA:4459h | 13,800 searches
+       27/1,000,000 | 4/min | ETA:4548h | 14,100 searches
+       27/1,000,000 | 4/min | ETA:4640h | 14,400 searches
+       27/1,000,000 | 4/min | ETA:4734h | 14,700 searches
+       28/1,000,000 | 4/min | ETA:4661h | 15,000 searches
+       28/1,000,000 | 4/min | ETA:4753h | 15,300 searches
+       28/1,000,000 | 3/min | ETA:4860h | 15,600 searches
+       28/1,000,000 | 3/min | ETA:4960h | 15,900 searches
+       28/1,000,000 | 3/min | ETA:5038h | 16,200 searches
+       28/1,000,000 | 3/min | ETA:5115h | 16,500 searches
+       28/1,000,000 | 3/min | ETA:5233h | 16,800 searches
+       28/1,000,000 | 3/min | ETA:5330h | 17,100 searches
+       29/1,000,000 | 3/min | ETA:5239h | 17,400 searches
+       29/1,000,000 | 3/min | ETA:5308h | 17,700 searches
+       29/1,000,000 | 3/min | ETA:5418h | 18,000 searches
+       29/1,000,000 | 3/min | ETA:5544h | 18,300 searches
+       29/1,000,000 | 3/min | ETA:5639h | 18,600 searches
