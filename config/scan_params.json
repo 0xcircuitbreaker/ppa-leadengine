@@ -1,8 +1,17 @@
 {
-  "_comment": "PPA scan parameters - the ONLY control surface. Hermes edits this file, then restarts the scanner jobs. states: any of TX AZ OH OK FL LA WV IL GA NC NJ PA. workers: threads per node (60-150). daily_volume_target: compile target for the daily batch.",
-  "states": ["TX", "AZ", "OH", "OK", "FL", "LA", "WV", "IL", "GA", "NC", "NJ", "PA"],
-  "workers": 120,
-  "daily_volume_target": 167000,
-  "daily_new_pct": 0.30,
-  "max_rows_per_file": 10000
+ "_comment": "PPA scan parameters - the ONLY control surface. Hermes edits this file, then restarts the scanner jobs. states: any of TX AZ OH OK FL LA WV IL GA NC NJ PA. workers: threads per node (60-150). daily_volume_target: compile target for the daily batch.",
+ "states": [
+  "TX",
+  "AZ",
+  "OH",
+  "OK",
+  "FL",
+  "LA",
+  "WV",
+  "NC"
+ ],
+ "workers": 120,
+ "daily_volume_target": 167000,
+ "daily_new_pct": 0.3,
+ "max_rows_per_file": 10000
 }
