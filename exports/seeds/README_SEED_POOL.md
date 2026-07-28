@@ -22,6 +22,14 @@ enricher's hit rate decays because the remaining seeds are stale:
 3. Do NOT ship the registry connectors, snapshot store, or scheduler to
    this machine. Data only, on request, at the operator's discretion.
 
+## Delivery arming (2026-07-28)
+
+Pool consumption frozen at ~20% (411,500 used / 1,626,479 REMAIN for the
+partner). Lanes are ARMED but sleeping: `exports/seeds/.enrich_paused`
+exists on both machines. AT HANDOFF: delete that file on both machines —
+enrichment resumes automatically (launchd KeepAlive, offset resumes where
+it stopped). Remaining runway at current hit rate: ~40-55k phones.
+
 ## What the delivery system has (self-sufficient)
 
 - seed_enrich.py (2 shards: this Mac 0/2, quasar 1/2) consuming this pool

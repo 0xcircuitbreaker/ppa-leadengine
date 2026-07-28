@@ -146,6 +146,11 @@ def main():
     of = int(os.environ.get("SEED_OF", "1"))
     limit = int(sys.argv[2]) if len(sys.argv) > 2 else 10**9
 
+    pause_flag = ROOT / "exports" / "seeds" / ".enrich_paused"
+    while pause_flag.exists():
+        print("enrichment paused (saved for delivery) - sleeping", flush=True)
+        time.sleep(300)
+
     state = json.loads(STATE_FILE.read_text()) if STATE_FILE.exists() else {"offset": 0}
     seeds = []
     with open(SEEDS) as f:
