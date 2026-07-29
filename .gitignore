@@ -11,3 +11,4 @@ exports/local_scan.log
 exports/seeds/seed_pool.csv
 exports/seeds/.enrich_state.json
 exports/already_sent_db.csv
+config/delivery_paused.flag
