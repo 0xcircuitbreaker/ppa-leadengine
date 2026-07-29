@@ -39,6 +39,16 @@ def main() -> None:
             pdates = json.load(open(LEDGER)).get("phone_dates", {})
         except Exception:  # noqa: BLE001
             pdates = {}
+    # cycle_bank.json (button-flow phone->date map, incl. synthetic legacy dates)
+    # supplements the ledger: its dates win where the ledger has none.
+    cycle_bank = ROOT / "exports" / "dedup_reference" / "cycle_bank.json"
+    if cycle_bank.exists():
+        try:
+            cb = json.load(open(cycle_bank)).get("phone_dates", {})
+            for p, ts in cb.items():
+                pdates.setdefault(p, ts)
+        except Exception:  # noqa: BLE001
+            pass
 
     tracked = 0
     eligible_rows = []
