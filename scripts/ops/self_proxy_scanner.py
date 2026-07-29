@@ -73,12 +73,15 @@ WEBSHARE_FALLBACK = {
 }
 
 def get_proxy():
-    """Next self-proxy IP; auto-failover to Webshare residential on sustained
-    failures, auto-recover back to self-proxy after cooldown."""
+    """Next self-proxy IP. Fallback chain: fleet proxies -> DIRECT (office
+    IP, when the fleet dies) -> webshare only if WEBSHARE_ACTIVATE=1.
+    Auto-recovers to the fleet after cooldown."""
     global _proxy_idx
     with _lock:
-        if _proxy_failures >= FALLBACK_AFTER_FAILURES and not FALLBACK_DISABLED:
-            return WEBSHARE_FALLBACK
+        if _proxy_failures >= FALLBACK_AFTER_FAILURES:
+            if not FALLBACK_DISABLED:
+                return WEBSHARE_FALLBACK
+            return None   # direct egress (office IP) until the fleet recovers
         ip = VPS_PROXY_POOL[_proxy_idx % len(VPS_PROXY_POOL)]
         _proxy_idx += 1
     return {"http": f"http://{ip}:8888", "https": f"http://{ip}:8888"}
@@ -295,7 +298,7 @@ def main():
             if int(el) % 15 == 0 or len(leads) % 1000 < bs:
                 rate = len(leads) / max(el, 1) * 60
                 eta = (target - len(leads)) / max(rate, 1) / 60
-                fb = " | FALLBACK:webshare" if _proxy_failures >= FALLBACK_AFTER_FAILURES else ""
+                fb = (" | FALLBACK:webshare" if not FALLBACK_DISABLED else " | FALLBACK:direct") if _proxy_failures >= FALLBACK_AFTER_FAILURES else ""
                 print(f"  {len(leads):>7,}/{target:,} | {rate:.0f}/min | ETA:{eta:.0f}h | {done_searches:,} searches{fb}")
             if len(leads) > 0 and len(leads) % 5000 < bs:
                 save(leads, out, "checkpoint")

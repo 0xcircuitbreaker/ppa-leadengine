@@ -57,11 +57,17 @@ _lock = threading.Lock()
 _idx = 0
 _found = 0
 _done = 0
+_fails = 0
+DIRECT_AFTER = 100   # sustained proxy failures before going direct (office IP)
 
 
 def proxy():
+    """Fleet proxies round-robin; on sustained failure go DIRECT (office IP)
+    until the fleet recovers. Webshare only if WEBSHARE_ACTIVATE=1."""
     global _idx
     with _lock:
+        if _fails >= DIRECT_AFTER and os.environ.get("WEBSHARE_ACTIVATE", "") != "1":
+            return None   # direct egress
         ip = PROXY_POOL[_idx % len(PROXY_POOL)]
         _idx += 1
     return {"http": f"http://{ip}:8888", "https": f"http://{ip}:8888"}
@@ -96,11 +102,14 @@ def extract_phones(text, st):
 def enrich(seed):
     name, cat, city, st = seed["business_name"], seed["category"], seed["city"], seed["state"]
     q = f'"{name}" {city} {st}'
+    global _fails
     try:
         r = cf_requests.get(f"https://www.bing.com/search?q={quote_plus(q)}&count=10",
                             impersonate="chrome124", proxies=proxy(), timeout=20)
         html = r.text
+        _fails = max(0, _fails - 2)
     except Exception:
+        _fails += 1
         return None
     urls = []
     for m in re.finditer(r'<a href="(https?://([^"/]+))', html):
