@@ -24,6 +24,7 @@ FIELDS = ["priority", "business_name", "phone", "phone_type", "category", "city"
 _blocked = json.load(open(ROOT / "config" / "blocked_states.json"))
 BN = set(_blocked["blocked_state_names"])
 BA = {a for acs in _blocked["blocked_area_codes"].values() for a in acs}
+ALLOWED_STATES = {s.upper() for s in _blocked.get("allowed_states", [])}
 JUNK = ("vinted", "wikipedia", "amazon", "ebay", "walmart", "target", "bestbuy",
         "nordstrom", "craigslist", "indeed", "glassdoor", "ziprecruiter",
         "nytimes", "cnn.com", "bbc.", "forbes", "webmd", "mayoclinic",
@@ -40,7 +41,10 @@ def fmt(d):
 
 
 def is_blocked(state, phone):
-    if (state or "").strip().upper() in BN:
+    s = (state or "").strip().upper()
+    if ALLOWED_STATES and s and s not in ALLOWED_STATES:
+        return True  # strict allowlist: any known non-allowed state is out
+    if s in BN:
         return True
     d = re.sub(r"\D", "", str(phone or ""))
     return len(d) >= 10 and d[-10:-7] in BA
@@ -80,6 +84,17 @@ def main() -> None:
     valid_states = set(params["states"])
     acs = load_acs()
     sent = load_sent()
+    # Operator-controlled cycle injection (2026-07-29): refreshed 60-day leads
+    # NEVER auto-inject. Only phones explicitly added via the telegram button
+    # flow (inject_allowlist.json) may re-enter a batch.
+    inject_allow: set = set()
+    inject_file = ROOT / "exports" / "dedup_reference" / "inject_allowlist.json"
+    if inject_file.exists():
+        try:
+            inject_allow = {norm(p) for p in json.load(open(inject_file))}
+        except Exception:
+            inject_allow = set()
+    inject_allow.discard("")
 
     new: dict[str, dict] = {}
     for fn in sorted(glob.glob(str(ROOT / "exports" / "fleet_harvest" / "node_*.csv"))):
@@ -132,6 +147,8 @@ def main() -> None:
                     st = (r.get("state") or "").strip().upper()
                     if not n or n in fresh or n in new or st not in valid_states:
                         continue
+                    if n not in inject_allow:
+                        continue  # no auto-injection: operator button flow only
                     if n in eligible:
                         pass
                     else:
